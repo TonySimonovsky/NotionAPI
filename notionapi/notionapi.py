@@ -2,7 +2,6 @@ import requests
 import json
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional, Union, get_origin, get_args
-from .objects import *
 from .types import *
 from .blocks import *
 
@@ -81,7 +80,6 @@ class PageObject(BaseModel):
     properties: Dict[str, Any]
     url: str
 
-
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'PageObject':
         """
@@ -125,7 +123,6 @@ class PageAPI:
         self.page_id = page_id
         self.block = BlockAPI(api=api, parent_id=page_id)
 
-
     def get(self, page_id) -> 'PageObject':
         endpoint_url = f"{self.api.base_url}/pages/{page_id}"
         headers = self.api._get_headers()
@@ -135,7 +132,6 @@ class PageAPI:
         page = PageObject.from_dict(response.json())
 
         return page
-
 
     def update(self, page_id: str, properties: Dict[str, Any]) -> Dict[str, Any]:
         page = self.get(page_id=page_id)
@@ -227,11 +223,31 @@ class BlockAPI:
         self.parent_id = parent_id
 
 
-    def append(self, block_id: str, children: List[Dict[str, Any]], after: Optional[str] = None) -> List[BlockObject]:
+    def append(self, block_id: str, children: List[Union[Dict[str, Any], BaseModel]], after: Optional[str] = None) -> List[BlockObject]:
+        """
+        Appends children blocks to a parent block.
+
+        Args:
+            block_id (str): The ID of the parent block.
+            children (List[Union[Dict[str, Any], BaseModel]]): A list of children blocks, either as dictionaries or Block objects.
+            after (Optional[str], optional): The ID of the block after which to append the children. Defaults to None.
+
+        Returns:
+            List[BlockObject]: A list of appended Block objects.
+        """
         url = f"{self.api.base_url}/blocks/{block_id}/children"
         headers = self.api._get_headers()
+
+        # Ensure all children are dictionaries
+        serialized_children = []
+        for child in children:
+            if isinstance(child, BaseModel):
+                serialized_children.append(child.dict())
+            else:
+                serialized_children.append(child)
+
         payload = {
-            "children": children
+            "children": serialized_children
         }
         if after:
             payload["after"] = after

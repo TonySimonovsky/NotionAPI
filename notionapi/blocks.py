@@ -205,10 +205,28 @@ class ImageBlock(BaseModel):
     type: str = "image"
     image: ImageContent = ImageContent()
 
+    def __init__(self, image_url: str = None, **kwargs):
+        """
+        Initializes an ImageBlock with an optional image URL. If an image URL is provided, it sets the URL in the image content.
+
+        Args:
+            image_url (str, optional): The URL of the image to be associated with this block. Defaults to None.
+        """
+        super().__init__(**kwargs)
+        self.image.external["url"] = image_url
+
     def dict(self, **kwargs) -> Dict[str, Any]:
-        # print(f"kwargs: {kwargs}")
+        """
+        Converts the ImageBlock to a dictionary, removing unnecessary fields.
+
+        Args:
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Dict[str, Any]: The dictionary representation of the ImageBlock.
+        """
+    # def dict(self, **kwargs) -> Dict[str, Any]:
         data = super().dict(**kwargs)
-        # print(f"data: {data}")
         data.pop('type', None)
         data['image'].pop('image_type', None)
         return data
